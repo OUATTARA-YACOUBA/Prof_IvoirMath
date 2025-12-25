@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IvoirMath AI - Assistant Mathématiques Programme Ivoirien</title>
+    
+    <!-- Configuration MathJax AVANT le chargement -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    
+    <!-- Chargement de MathJax -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF7A00;
+            --primary-dark: #E66D00;
+            --secondary: #009E60;
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --bg-input: #334155;
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --border: #475569;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a2332 100%);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        .topic-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 0.5rem;
+        }
+
+        .topic-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .topic-list::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+            border-radius: 3px;
+        }
+
+        .topic-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .topic-list::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .topic-item {
+            padding: 0.75rem 1rem;
+            background: var(--bg-input);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            flex-shrink: 0;
+        }
+
+        .topic-item:hover {
+            background: rgba(255, 122, 0, 0.1);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow: hidden;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .quick-action-btn {
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-action-btn:hover {
+            background: rgba(255, 122, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .quick-action-btn.active {
+            background: rgba(255, 122, 0, 0.2);
+            border-color: var(--primary);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255, 122, 0, 0.3);
+        }
+
+        .chat-container {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            animation: slideIn 0.3s ease-out;
+            flex-shrink: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, var(--secondary) 0%, #00b374 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        .message.user .message-content {
+            background: rgba(255, 122, 0, 0.15);
+            border: 1px solid rgba(255, 122, 0, 0.3);
+        }
+
+        .message.assistant .message-content {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+        }
+
+        .message-content strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .message-content em {
+            color: var(--secondary);
+            font-style: italic;
+        }
+
+        .message-content code {
+            background: var(--bg-dark);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message-content pre {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-content ul,
+        .message-content ol {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-content li {
+            margin: 0.3rem 0;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .chat-input-area {
+            padding: 1.5rem;
+            background: var(--bg-input);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s;
+            resize: none;
+            max-height: 120px;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+        }
+
+        #sendBtn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 122, 0, 0.4);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--error);
+            margin: 1rem 0;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 250px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .sidebar {
+                max-height: 200px;
+            }
+
+            .quick-actions {
+                gap: 0.5rem;
+            }
+
+            .quick-action-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">∫</div>
+                <div class="logo-text">
+                    <h1>IvoirMath AI</h1>
+                    <p>Assistant Mathématiques - Programme Ivoirien</p>
+                </div>
+            </div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span>En ligne</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h3 id="sidebarTitle">Programme complet</h3>
+            <div class="topic-list" id="topicList">
+                <div class="topic-item">📋 Tous les niveaux</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="quick-actions">
+                <button class="quick-action-btn active" data-level="tout" onclick="selectLevel('tout')">📚 Tout le programme</button>
+                <button class="quick-action-btn" data-level="primaire" onclick="selectLevel('primaire')">🎒 Primaire</button>
+                <button class="quick-action-btn" data-level="premier" onclick="selectLevel('premier')">📐 Premier cycle</button>
+                <button class="quick-action-btn" data-level="second" onclick="selectLevel('second')">🎓 Second cycle</button>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message assistant">
+                        <div class="message-avatar">🎓</div>
+                        <div class="message-content">
+                            Bonjour ! Je suis votre professeur de mathématiques spécialisé dans le programme ivoirien. 
+                            Par défaut, je couvre tout le programme du primaire au lycée. 
+                            Vous pouvez sélectionner un niveau spécifique en haut, et je me limiterai strictement à ce programme. 
+                            Posez-moi vos questions !
+                        </div>
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span>Le professeur réfléchit...</span>
+                </div>
+                <div class="chat-input-area">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="userInput" 
+                            placeholder="Posez votre question de mathématiques ici..."
+                            rows="1"
+                        ></textarea>
+                        <button id="sendBtn">Envoyer</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const topicList = document.getElementById('topicList');
+        const sidebarTitle = document.getElementById('sidebarTitle');
+
+        // Niveau sélectionné (par défaut: tout)
+        let currentLevel = 'tout';
+
+        // Hiérarchie des niveaux
+        const levelHierarchy = {
+            'tout': ['primaire', 'premier', 'second'],
+            'primaire': ['primaire'],
+            'premier': ['primaire', 'premier'],
+            'second': ['primaire', 'premier', 'second']
+        };
+
+        // Programmes par niveau
+        const programmes = {
+            tout: {
+                title: "Programme complet",
+                chapitres: ["📋 Tous les niveaux du programme ivoirien"],
+                description: "Tout le programme"
+            },
+            primaire: {
+                title: "Programme Primaire",
+                description: "Primaire uniquement",
+                chapitres: [
+                    "➕ Addition et soustraction",
+                    "✖️ Multiplication et division",
+                    "📏 Mesures de longueur",
+                    "⏰ Temps et durée",
+                    "💰 Monnaie et prix",
+                    "📐 Formes géométriques simples",
+                    "🔢 Nombres décimaux",
+                    "📊 Tableaux et graphiques simples"
+                ]
+            },
+            premier: {
+                title: "Premier Cycle (6ème - 3ème)",
+                description: "Primaire + Premier cycle",
+                chapitres: [
+                    "🔢 Nombres relatifs et opérations",
+                    "➗ Fractions et nombres décimaux",
+                    "📐 Géométrie plane",
+                    "📏 Périmètres et aires",
+                    "📦 Volumes et solides",
+                    "📈 Proportionnalité",
+                    "🎯 Équations du 1er degré",
+                    "📊 Statistiques descriptives",
+                    "🔺 Théorème de Pythagore",
+                    "⚖️ Systèmes d'équations"
+                ]
+            },
+            second: {
+                title: "Second Cycle (2nde - Tle)",
+                description: "Primaire + Premier cycle + Second cycle",
+                chapitres: [
+                    "📐 Équations du 2nd degré",
+                    "📈 Fonctions numériques",
+                    "📉 Dérivées et études de fonctions",
+                    "∫ Primitives et intégrales",
+                    "📊 Suites numériques",
+                    "🔄 Probabilités",
+                    "📐 Géométrie analytique",
+                    "↗️ Vecteurs et barycentres",
+                    "📏 Trigonométrie",
+                    "∞ Limites de fonctions",
+                    "🔢 Nombres complexes (Tle C, D)",
+                    "📈 Logarithme et exponentielle"
+                ]
+            }
+        };
+
+        // Fonction pour changer de niveau
+        function selectLevel(level) {
+            currentLevel = level;
+            
+            // Mettre à jour les boutons actifs
+            document.querySelectorAll('.quick-action-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-level="${level}"]`).classList.add('active');
+            
+            // Mettre à jour la sidebar avec hiérarchie
+            const programme = programmes[level];
+            const allowedLevels = levelHierarchy[level];
+            
+            sidebarTitle.textContent = programme.title;
+            topicList.innerHTML = '';
+            
+            // Afficher info sur la couverture
+            if (level !== 'tout') {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'topic-item';
+                infoDiv.style.background = 'rgba(255, 122, 0, 0.15)';
+                infoDiv.style.borderColor = 'var(--primary)';
+                infoDiv.style.cursor = 'default';
+                infoDiv.textContent = `✓ ${programme.description}`;
+                topicList.appendChild(infoDiv);
+            }
+            
+            // Afficher les chapitres du niveau principal
+            programme.chapitres.forEach(chapitre => {
+                const div = document.createElement('div');
+                div.className = 'topic-item';
+                div.textContent = chapitre;
+                topicList.appendChild(div);
+            });
+            
+            // Ajouter les programmes des niveaux inférieurs si pertinent
+            if (level === 'premier' || level === 'second') {
+                // Ajouter séparateur
+                const separator = document.createElement('div');
+                separator.style.height = '1px';
+                separator.style.background = 'var(--border)';
+                separator.style.margin = '1rem 0';
+                topicList.appendChild(separator);
+                
+                // Ajouter note sur niveaux inférieurs
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'topic-item';
+                noteDiv.style.opacity = '0.7';
+                noteDiv.style.fontSize = '0.85rem';
+                noteDiv.style.cursor = 'default';
+                noteDiv.textContent = '📚 + Tous les chapitres des niveaux inférieurs';
+                topicList.appendChild(noteDiv);
+            }
+            
+            // Ajouter un message d'information
+            const levelMessages = {
+                tout: "tout le programme ivoirien (primaire au lycée)",
+                primaire: "le primaire uniquement",
+                premier: "le primaire et le premier cycle",
+                second: "le primaire, premier cycle et second cycle"
+            };
+            
+            addMessage(`📚 Niveau sélectionné: ${levelMessages[level]}. Je répondrai aux questions de ce niveau et des niveaux inférieurs.`, false);
+        }
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Gestion de la touche Entrée
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Gestion du bouton Envoyer
+        sendBtn.addEventListener('click', sendMessage);
+
+        function addMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (isUser ? 'user' : 'assistant');
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🎓';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = formatMessage(content);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Rendre les formules mathématiques avec MathJax
+            if (!isUser && window.MathJax) {
+                MathJax.typesetPromise([messageContent]).catch(function(err) {
+                    console.error('Erreur MathJax:', err);
+                });
+            }
+        }
+
+        function formatMessage(text) {
+            if (typeof text !== 'string') {
+                text = String(text);
+            }
+            
+            // Convertir le markdown de base
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            
+            // Remplacer les retours à la ligne
+            text = text.replace(/\n/g, '<br>');
+            
+            return text;
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = '⚠️ ' + message;
+            chatMessages.appendChild(errorDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            
+            if (!message) {
+                return;
+            }
+            
+            sendBtn.disabled = true;
+            addMessage(message, true);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            
+            typingIndicator.classList.add('active');
+            
+            // Timeout de 45 secondes
+            const timeoutId = setTimeout(() => {
+                typingIndicator.classList.remove('active');
+                showError('La requête prend trop de temps. Veuillez réessayer.');
+                sendBtn.disabled = false;
+            }, 45000);
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Accept': 'application/json; charset=utf-8'
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        level: currentLevel 
+                    })
+                });
+                
+                clearTimeout(timeoutId);
+                typingIndicator.classList.remove('active');
+                
+                if (!response.ok) {
+                    throw new Error('Erreur HTTP: ' + response.status);
+                }
+                
+                const data = await response.json();
+                
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    const aiMessage = data.choices[0].message.content;
+                    
+                    // Vérifier si la réponse est vide ou très courte (signe de problème)
+                    if (!aiMessage || aiMessage.trim().length < 10) {
+                        addMessage("Je suis un assistant spécialisé en mathématiques du programme ivoirien. Je ne peux vous aider qu'avec des questions de mathématiques. Posez-moi une question sur un chapitre du programme !", false);
+                    } else {
+                        addMessage(aiMessage, false);
+                    }
+                } else if (data.error) {
+                    showError(data.error);
+                } else {
+                    showError('Réponse invalide du serveur.');
+                }
+            } catch (error) {
+                clearTimeout(timeoutId);
+                typingIndicator.classList.remove('active');
+                console.error('Erreur:', error);
+                
+                // Message d'erreur plus informatif
+                if (error.message.includes('Failed to fetch')) {
+                    showError('Impossible de se connecter au serveur. Assurez-vous que Flask est lancé (python app.py).');
+                } else {
+                    showError('Une erreur s\'est produite: ' + error.message);
+                }
+            } finally {
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // Focus sur l'input au chargement
+        window.addEventListener('load', function() {
+            userInput.focus();
+        });
+    </script>
+</body>
+</html>
