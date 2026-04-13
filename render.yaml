@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ivoirmath-ai
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --timeout 120 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: OPENROUTER_API_KEY
+        value: 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
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ivoirmath-db
+          property: connectionString
+
+databases:
+  - name: ivoirmath-db
+    databaseName: ivoirmath
+    user: ivoirmath
+    plan: free
